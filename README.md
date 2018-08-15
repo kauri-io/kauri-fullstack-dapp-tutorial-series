@@ -1,10 +1,10 @@
 # kauri-fullstack-dapp-tutorial-series
 
-This repository holds the example and reference code for the *<Add link to series when live on kauri>*
+This repository holds the example and reference code for the <Add link to series when live on kauri>
 
-In this series, we'll build a simple dApp (decentralised application).
+In this series, we'll build a simple dApp (decentralised application)
  
-We'll introduce all the different pieces of the tech stack and tools you can use to build a dApp.
+We'll introduce all the different pieces of the tech stack and tools you can use to build a dApp
  
 The dApp will simply allow any user to issue a bounty in ETH
 
