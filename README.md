@@ -1,6 +1,6 @@
 # kauri-fullstack-dapp-tutorial-series
 
-This repository holds the example and reference code for the <Add link to series when live on kauri>
+This repository holds the example and reference code for the *Add link to series when live on kauri*
 
 In this series, we'll build a simple dApp (decentralised application)
  
