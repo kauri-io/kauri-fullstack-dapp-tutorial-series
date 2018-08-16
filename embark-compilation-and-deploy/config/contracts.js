@@ -1,3 +1,11 @@
+const fs = require('fs');
+
+let secrets;
+
+if (fs.existsSync('secrets.json')) {
+  secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
+}
+
 module.exports = {
   // default applies to all environments
   default: {
@@ -36,6 +44,19 @@ module.exports = {
       //SimpleStorage: {
       //  args: [ 100 ]
       //}
+    }
+  },
+  rinkeby: {
+    deployment:{
+      accounts: [
+        {
+          "mnemonic": secrets.mnemonic
+        }
+      ],
+      host: "rinkeby.infura.io/v3/"+secrets.infuraApiKey,
+      port: false,
+      protocol: 'https',
+      type: "rpc"
     }
   }
 };

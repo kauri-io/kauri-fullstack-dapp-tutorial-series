@@ -15,11 +15,9 @@ const HDWalletProvider = require('truffle-hdwallet-provider');
 const fs = require('fs');
 
 let secrets;
-let mnemonic = '';
 
 if (fs.existsSync('secrets.json')) {
  secrets = JSON.parse(fs.readFileSync('secrets.json', 'utf8'));
- mnemonic = secrets.mnemonic;
 }
 
 module.exports = {
@@ -30,7 +28,7 @@ module.exports = {
       port: 8545
     },
     rinkeby: {
-      provider: new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/v3/170d7d1a7edc4c8daf11d9dc16be0a5e"),
+      provider: new HDWalletProvider(secrets.mnemonic, "https://rinkeby.infura.io/v3/"+secrets.infuraApiKey),
       network_id: '4'
     }
   }
