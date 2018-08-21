@@ -15,8 +15,7 @@ contract('Bounties', function(accounts) {
 
   it("Should allow a user to issue a new bounty", async () => {
 
-    let bounties = await Bounties.new();
-    let tx = await bounties.issueBounty("data",
+    let tx = await bountiesInstance.issueBounty("data",
                                 getCurrentTime() + (dayInSeconds * 2),
                                 {from: accounts[0], value: 500000000000000000});
 
