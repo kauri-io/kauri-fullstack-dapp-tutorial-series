@@ -24,6 +24,9 @@ class App extends Component {
       etherscanLink: "https://rinkeby.etherscan.io",
       web3: null
     }
+
+    this.handleIssueBounty = this.handleIssueBounty.bind(this)
+    this.handleChange = this.handleChange.bind(this)
   }
 
   componentWillMount() {
