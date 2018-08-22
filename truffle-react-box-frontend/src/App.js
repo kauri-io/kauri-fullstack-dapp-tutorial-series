@@ -1,14 +1,21 @@
 import React, { Component } from 'react'
 import BountiesContract from '../build/contracts/Bounties.json'
 import getWeb3 from './utils/getWeb3'
+import { setJSON, getJSON } from './utils/IPFS.js'
 import {Form, FormGroup, FormControl, Button, HelpBlock, Grid, Row, Panel} from 'react-bootstrap'
+
+var ReactBsTable  = require('react-bootstrap-table');
+var BootstrapTable = ReactBsTable.BootstrapTable;
+var TableHeaderColumn = ReactBsTable.TableHeaderColumn;
 
 import './css/oswald.css'
 import './css/open-sans.css'
 import './css/pure-min.css'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-bootstrap-table/dist/react-bootstrap-table-all.min.css';
 
+const ipfsBaseUrl = "https://ipfs.infura.io/ipfs";
 const etherscanBaseUrl = "https://rinkeby.etherscan.io"
 
 class App extends Component {
@@ -22,6 +29,7 @@ class App extends Component {
       bountyData: undefined,
       bountyDeadline: undefined,
       etherscanLink: "https://rinkeby.etherscan.io",
+      bounties: [],
       web3: null
     }
 
@@ -63,6 +71,45 @@ class App extends Component {
 
      let instance = await bounties.deployed()
      this.setState({ bountiesInstance: instance })
+     this.addEventListener(this)
+  }
+
+  addEventListener(component) {
+
+    var bountyIssuedEvent = this.state.bountiesInstance.allEvents({fromBlock: 0, toBlock: 'latest'})
+
+    bountyIssuedEvent.watch(async function(err, result) {
+      if (err) {
+        console.log(err)
+        return
+      }
+
+      if(result.args)
+      {
+        if(result.event === "BountyIssued")
+        {
+          var newBountiesArray = component.state.bounties.slice()
+
+          //First get the data from ipfs and add it to the result
+          var ipfsJson = {}
+          try{
+            ipfsJson = await getJSON(result.args.data);
+          }
+          catch(e)
+          {
+
+          }
+          if(ipfsJson.bountyData !== undefined)
+          {
+            result.args['bountyData'] = ipfsJson.bountyData;
+            result.args['ipfsData'] = ipfsBaseUrl+"/"+result.args.data;
+          }
+          newBountiesArray.push(result.args)
+          component.setState({ bounties: newBountiesArray })
+        }
+      }
+
+    })
   }
 
   // Handle form data change
@@ -90,8 +137,8 @@ class App extends Component {
   {
     if (typeof this.state.bountiesInstance !== 'undefined') {
       event.preventDefault();
-      //const ipfsHash = await setJSON({ bountyData: this.state.bountyData });
-      let result = await this.state.bountiesInstance.issueBounty(this.state.bountyData,this.state.bountyDeadline,{from: this.state.web3.eth.accounts[0], value: this.state.web3.toWei(this.state.bountyAmount, 'ether')})
+      const ipfsHash = await setJSON({ bountyData: this.state.bountyData });
+      let result = await this.state.bountiesInstance.issueBounty(ipfsHash,this.state.bountyDeadline,{from: this.state.web3.eth.accounts[0], value: this.state.web3.toWei(this.state.bountyAmount, 'ether')})
       this.setLastTransactionDetails(result)
     }
   }
@@ -153,6 +200,19 @@ class App extends Component {
               </Form>
               </Panel>
               </Row>
+
+              <Row>
+            <Panel>
+            <Panel.Heading>Issued Bounties</Panel.Heading>
+            <BootstrapTable data={this.state.bounties} striped hover>
+              <TableHeaderColumn isKey dataField='bounty_id'>ID</TableHeaderColumn>
+              <TableHeaderColumn dataField='issuer'>Issuer</TableHeaderColumn>
+              <TableHeaderColumn dataField='amount'>Amount</TableHeaderColumn>
+              <TableHeaderColumn dataField='ipfsData'>Bounty Data</TableHeaderColumn>
+              <TableHeaderColumn dataField='bountyData'>Bounty Data</TableHeaderColumn>
+            </BootstrapTable>
+            </Panel>
+            </Row>
               </Grid>
             </div>
     );
