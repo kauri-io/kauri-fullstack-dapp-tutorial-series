@@ -1,6 +1,6 @@
 # kauri-fullstack-dapp-tutorial-series
 
-This repository holds the example and reference code for the (Full stack dApp tutorial series)[https://beta.kauri.io/collection/5b8e401ee727370001c942e3/full-stack-dapp-tutorial-series] on Kauri
+This repository holds the example and reference code for the [Full stack dApp tutorial series](https://beta.kauri.io/collection/5b8e401ee727370001c942e3/full-stack-dapp-tutorial-series) on Kauri
 
 In this series, we'll build a simple dApp (decentralised application)
  
