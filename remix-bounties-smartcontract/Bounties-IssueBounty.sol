@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.1;
 
 /**
  * @title Bounties
@@ -44,7 +44,7 @@ contract Bounties {
   * @param _data the requirements of the bounty
   */
   function issueBounty(
-      string _data,
+      string memory _data,
       uint64 _deadline
   )
       public
