@@ -70,7 +70,7 @@ contract Bounties {
   * @param _bountyId the index of the bounty to be fufilled
   * @param _data the ipfs hash which contains evidence of the fufillment
   */
-  function fulfillBounty(uint _bountyId, string _data)
+  function fulfillBounty(uint _bountyId, string memory _data)
     public
     bountyExists(_bountyId)
     notIssuer(_bountyId)
