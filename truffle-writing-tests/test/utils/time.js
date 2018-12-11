@@ -1,6 +1,6 @@
 function increaseTimeInSeconds(increaseInSeconds) {
 	return new Promise(function(resolve) {
-		web3.currentProvider.sendAsync({
+		web3.currentProvider.send({
 			jsonrpc: "2.0",
 			method: "evm_increaseTime",
 			params: [increaseInSeconds],
@@ -10,8 +10,11 @@ function increaseTimeInSeconds(increaseInSeconds) {
 };
 
 function getCurrentTime() {
-  var block = web3.eth.getBlock("latest");
-  return block.timestamp;
+	return new Promise(function(resolve) {
+  	web3.eth.getBlock("latest").then(function(block) {
+			resolve(block.timestamp)
+		});
+	})
 }
 
 Object.assign(exports, {
