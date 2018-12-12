@@ -13,7 +13,6 @@ import Row from 'react-bootstrap/lib/Row';
 import Panel from 'react-bootstrap/lib/Panel';
 
 import "./App.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 const etherscanBaseUrl = "https://rinkeby.etherscan.io"
 

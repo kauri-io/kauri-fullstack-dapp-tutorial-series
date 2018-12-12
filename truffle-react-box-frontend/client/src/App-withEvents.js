@@ -16,7 +16,6 @@ import BootstrapTable from 'react-bootstrap-table/lib/BootstrapTable';
 import TableHeaderColumn from 'react-bootstrap-table/lib/TableHeaderColumn';
 
 import "./App.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-table/dist/react-bootstrap-table-all.min.css';
 
 const etherscanBaseUrl = "https://rinkeby.etherscan.io"
