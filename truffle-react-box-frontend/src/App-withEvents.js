@@ -1,16 +1,21 @@
-import React, { Component } from 'react'
-import BountiesContract from '../build/contracts/Bounties.json'
-import getWeb3 from './utils/getWeb3'
-import {Form, FormGroup, FormControl, Button, HelpBlock, Grid, Row, Panel} from 'react-bootstrap'
+import React, { Component } from "react";
+import BountiesContract from "./contracts/Bounties.json";
+import getWeb3 from "./utils/getWeb3";
+import truffleContract from "truffle-contract";
 
-var ReactBsTable  = require('react-bootstrap-table');
-var BootstrapTable = ReactBsTable.BootstrapTable;
-var TableHeaderColumn = ReactBsTable.TableHeaderColumn;
+import Button from 'react-bootstrap/lib/Button';
+import Form from 'react-bootstrap/lib/Form';
+import FormGroup from 'react-bootstrap/lib/FormGroup';
+import FormControl from 'react-bootstrap/lib/FormControl';
+import HelpBlock from 'react-bootstrap/lib/HelpBlock';
+import Grid from 'react-bootstrap/lib/Grid';
+import Row from 'react-bootstrap/lib/Row';
+import Panel from 'react-bootstrap/lib/Panel';
 
-import './css/oswald.css'
-import './css/open-sans.css'
-import './css/pure-min.css'
-import './App.css'
+import BootstrapTable from 'react-bootstrap-table/lib/BootstrapTable';
+import TableHeaderColumn from 'react-bootstrap-table/lib/TableHeaderColumn';
+
+import "./App.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-table/dist/react-bootstrap-table-all.min.css';
 
@@ -28,6 +33,7 @@ class App extends Component {
       bountyDeadline: undefined,
       etherscanLink: "https://rinkeby.etherscan.io",
       bounties: [],
+      account: null,
       web3: null
     }
 
@@ -35,65 +41,43 @@ class App extends Component {
     this.handleChange = this.handleChange.bind(this)
   }
 
-  componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
+  componentDidMount = async () => {
+    try {
+      // Get network provider and web3 instance.
+      const web3 = await getWeb3();
 
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
-      })
+      // Use web3 to get the user's accounts.
+      const accounts = await web3.eth.getAccounts();
 
-      // Instantiate contract once web3 provided.
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
-  }
+      // Get the contract instance.
+      const bounties = truffleContract(BountiesContract);
+      bounties.setProvider(web3.currentProvider);
+      const instance = await bounties.deployed();
 
-  async instantiateContract() {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
-
-     const contract = require('truffle-contract')
-     const bounties = contract(BountiesContract)
-
-     bounties.setProvider(this.state.web3.currentProvider)
-
-
-     let instance = await bounties.deployed()
-     this.setState({ bountiesInstance: instance })
-     this.addEventListener(this)
-  }
+      // Set web3, accounts, and contract to the state, and then proceed with an
+      // example of interacting with the contract's methods.
+      this.setState({ bountiesInstance: instance, web3: web3, account: accounts[0]})
+      this.addEventListener(this)
+    } catch (error) {
+      // Catch any errors for any of the above operations.
+      alert(
+        `Failed to load web3, accounts, or contract. Check console for details.`
+      );
+      console.log(error);
+    }
+  };
 
   addEventListener(component) {
 
-    var bountyIssuedEvent = this.state.bountiesInstance.allEvents({fromBlock: 0, toBlock: 'latest'})
-
-    bountyIssuedEvent.watch(async function(err, result) {
-      if (err) {
-        console.log(err)
-        return
-      }
-
-      if(result.args)
-      {
-        if(result.event === "BountyIssued")
-        {
-          var newBountiesArray = component.state.bounties.slice()
-          newBountiesArray.push(result.args)
-          component.setState({ bounties: newBountiesArray })
-        }
-      }
-
+    this.state.bountiesInstance.BountyIssued({fromBlock: 0, toBlock: 'latest'})
+    .on('data', function(event){
+      console.log(event); // same results as the optional callback above
+      var newBountiesArray = component.state.bounties.slice()
+      newBountiesArray.push(event.args)
+      component.setState({ bounties: newBountiesArray })
     })
-  }
+    .on('error', console.error);
+}
 
   // Handle form data change
 
@@ -114,15 +98,12 @@ class App extends Component {
     }
   }
 
-  // Handle form submit
-
   async handleIssueBounty(event)
   {
-    console.log(this.state.bountiesInstance)
     if (typeof this.state.bountiesInstance !== 'undefined') {
       event.preventDefault();
       //const ipfsHash = await setJSON({ bountyData: this.state.bountyData });
-      let result = await this.state.bountiesInstance.issueBounty(this.state.bountyData,this.state.bountyDeadline,{from: this.state.web3.eth.accounts[0], value: this.state.web3.toWei(this.state.bountyAmount, 'ether')})
+      let result = await this.state.bountiesInstance.issueBounty(this.state.bountyData,this.state.bountyDeadline,{from: this.state.account, value: this.state.web3.utils.toWei(this.state.bountyAmount, 'ether')})
       this.setLastTransactionDetails(result)
     }
   }
@@ -140,66 +121,70 @@ class App extends Component {
   }
 
   render() {
+    if (!this.state.web3) {
+      return <div>Loading Web3, accounts, and contract...</div>;
+    }
     return (
       <div className="App">
-              <Grid>
-              <Row>
-              <a href={this.state.etherscanLink} target="_blank">Last Transaction Details</a>
-              </Row>
-              <Row>
-              <Panel>
-              <Panel.Heading>Issue Bounty</Panel.Heading>
-              <Form onSubmit={this.handleIssueBounty}>
-                  <FormGroup
-                    controlId="fromCreateBounty"
-                  >
-                    <FormControl
-                      componentClass="textarea"
-                      name="bountyData"
-                      value={this.state.bountyData}
-                      placeholder="Enter bounty details"
-                      onChange={this.handleChange}
-                    />
-                    <HelpBlock>Enter bounty data</HelpBlock><br/>
+      <Grid>
+      <Row>
+      <a href={this.state.etherscanLink} target="_blank" rel="noopener noreferrer">Last Transaction Details</a>
+      </Row>
+      <Row>
+      <Panel>
+      <Panel.Heading>Issue Bounty</Panel.Heading>
+      <Form onSubmit={this.handleIssueBounty}>
+          <FormGroup
+            controlId="fromCreateBounty"
+          >
+            <FormControl
+              componentClass="textarea"
+              name="bountyData"
+              value={this.state.bountyData}
+              placeholder="Enter bounty details"
+              onChange={this.handleChange}
+            />
+            <HelpBlock>Enter bounty data</HelpBlock><br/>
 
-                    <FormControl
-                      type="text"
-                      name="bountyDeadline"
-                      value={this.state.bountyDeadline}
-                      placeholder="Enter bounty deadline"
-                      onChange={this.handleChange}
-                    />
-                    <HelpBlock>Enter bounty deadline in seconds since epoch</HelpBlock><br/>
+            <FormControl
+              type="text"
+              name="bountyDeadline"
+              value={this.state.bountyDeadline}
+              placeholder="Enter bounty deadline"
+              onChange={this.handleChange}
+            />
+            <HelpBlock>Enter bounty deadline in seconds since epoch</HelpBlock><br/>
 
-                    <FormControl
-                      type="text"
-                      name="bountyAmount"
-                      value={this.state.bountyAmount}
-                      placeholder="Enter bounty amount"
-                      onChange={this.handleChange}
-                    />
-                    <HelpBlock>Enter bounty amount</HelpBlock><br/>
-                    <Button type="submit">Issue Bounty</Button>
-                  </FormGroup>
-              </Form>
-              </Panel>
-              </Row>
+            <FormControl
+              type="text"
+              name="bountyAmount"
+              value={this.state.bountyAmount}
+              placeholder="Enter bounty amount"
+              onChange={this.handleChange}
+            />
+            <HelpBlock>Enter bounty amount</HelpBlock><br/>
+            <Button type="submit">Issue Bounty</Button>
+          </FormGroup>
+      </Form>
+      </Panel>
+      </Row>
+      <Row>
+      <Panel>
+      <Panel.Heading>Issued Bounties</Panel.Heading>
+      <BootstrapTable data={this.state.bounties} striped hover>
+        <TableHeaderColumn isKey dataField='bounty_id'>ID</TableHeaderColumn>
+        <TableHeaderColumn dataField='issuer'>Issuer</TableHeaderColumn>
+        <TableHeaderColumn dataField='amount'>Amount</TableHeaderColumn>
+        <TableHeaderColumn dataField='data'>Bounty Data</TableHeaderColumn>
+      </BootstrapTable>
+      </Panel>
+      </Row>
+      </Grid>
 
-              <Row>
-            <Panel>
-            <Panel.Heading>Issued Bounties</Panel.Heading>
-            <BootstrapTable data={this.state.bounties} striped hover>
-              <TableHeaderColumn isKey dataField='bounty_id'>ID</TableHeaderColumn>
-              <TableHeaderColumn dataField='issuer'>Issuer</TableHeaderColumn>
-              <TableHeaderColumn dataField='amount'>Amount</TableHeaderColumn>
-              <TableHeaderColumn dataField='data'>Bounty Data</TableHeaderColumn>
-            </BootstrapTable>
-            </Panel>
-            </Row>
-              </Grid>
+
             </div>
     );
   }
 }
 
-export default App
+export default App;

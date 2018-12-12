@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 /**
  * @title Bounties
@@ -27,7 +27,7 @@ contract Bounties {
   */
 
   struct Bounty {
-      address issuer;
+      address payable issuer;
       uint deadline;
       string data;
       BountyStatus status;
@@ -36,7 +36,7 @@ contract Bounties {
 
   struct Fulfillment {
       bool accepted;
-      address fulfiller;
+      address payable fulfiller;
       string data;
   }
 
@@ -51,7 +51,7 @@ contract Bounties {
   * @param _data the requirements of the bounty
   */
   function issueBounty(
-      string _data,
+      string memory _data,
       uint64 _deadline
   )
       public
@@ -70,7 +70,7 @@ contract Bounties {
   * @param _bountyId the index of the bounty to be fufilled
   * @param _data the ipfs hash which contains evidence of the fufillment
   */
-  function fulfillBounty(uint _bountyId, string _data)
+  function fulfillBounty(uint _bountyId, string memory _data)
     public
     bountyExists(_bountyId)
     notIssuer(_bountyId)
