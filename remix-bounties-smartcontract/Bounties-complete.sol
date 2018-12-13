@@ -51,10 +51,10 @@ contract Bounties {
   * @param _data the requirements of the bounty
   */
   function issueBounty(
-      string memory _data,
+      string calldata _data,
       uint64 _deadline
   )
-      public
+      external
       payable
       hasValue()
       validateDeadline(_deadline)
@@ -70,7 +70,7 @@ contract Bounties {
   * @param _bountyId the index of the bounty to be fufilled
   * @param _data the ipfs hash which contains evidence of the fufillment
   */
-  function fulfillBounty(uint _bountyId, string _data)
+  function fulfillBounty(uint _bountyId, string memory _data)
     public
     bountyExists(_bountyId)
     notIssuer(_bountyId)
