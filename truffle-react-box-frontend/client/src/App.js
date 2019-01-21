@@ -3,7 +3,6 @@ import BountiesContract from "./contracts/Bounties.json";
 import getWeb3 from "./utils/getWeb3";
 // eslint-disable-next-line
 import { setJSON, getJSON } from './utils/IPFS.js'
-import truffleContract from "truffle-contract";
 
 import Button from 'react-bootstrap/lib/Button';
 import Form from 'react-bootstrap/lib/Form';
@@ -52,9 +51,12 @@ class App extends Component {
       const accounts = await web3.eth.getAccounts();
 
       // Get the contract instance.
-      const bounties = truffleContract(BountiesContract);
-      bounties.setProvider(web3.currentProvider);
-      const instance = await bounties.deployed();
+      const networkId = await web3.eth.net.getId();
+      const deployedNetwork = BountiesContract.networks[networkId];
+      const instance = new web3.eth.Contract(
+       BountiesContract.abi,
+       deployedNetwork && deployedNetwork.address,
+      );
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -71,12 +73,12 @@ class App extends Component {
 
   addEventListener(component) {
 
-    this.state.bountiesInstance.BountyIssued({fromBlock: 0, toBlock: 'latest'})
+    this.state.bountiesInstance.events.BountyIssued({fromBlock: 0, toBlock: 'latest'})
     .on('data', async function(event){
       //First get the data from ipfs and add it to the event
       var ipfsJson = {}
       try{
-        ipfsJson = await getJSON(event.args.data);
+        ipfsJson = await getJSON(event.returnValues.data);
       }
       catch(e)
       {
@@ -85,16 +87,16 @@ class App extends Component {
 
       if(ipfsJson.bountyData !== undefined)
       {
-        event.args['bountyData'] = ipfsJson.bountyData;
-        event.args['ipfsData'] = ipfsBaseUrl+"/"+event.args.data;
+        event.returnValues['bountyData'] = ipfsJson.bountyData;
+        event.returnValues['ipfsData'] = ipfsBaseUrl+"/"+event.returnValues.data;
       }
       else {
-        event.args['ipfsData'] = "none";
-        event.args['bountyData'] = event.args['data'];
+        event.returnValues['ipfsData'] = "none";
+        event.returnValues['bountyData'] = event.returnValues['data'];
       }
 
       var newBountiesArray = component.state.bounties.slice()
-      newBountiesArray.push(event.args)
+      newBountiesArray.push(event.returnValues)
       component.setState({ bounties: newBountiesArray })
     })
     .on('error', console.error);
@@ -124,7 +126,7 @@ class App extends Component {
     if (typeof this.state.bountiesInstance !== 'undefined') {
       event.preventDefault();
       const ipfsHash = await setJSON({ bountyData: this.state.bountyData });
-      let result = await this.state.bountiesInstance.issueBounty(ipfsHash,this.state.bountyDeadline,{from: this.state.account, value: this.state.web3.utils.toWei(this.state.bountyAmount, 'ether')})
+      let result = await this.state.bountiesInstance.methods.issueBounty(ipfsHash,this.state.bountyDeadline).send({from: this.state.account, value: this.state.web3.utils.toWei(this.state.bountyAmount, 'ether')})
       this.setLastTransactionDetails(result)
     }
   }

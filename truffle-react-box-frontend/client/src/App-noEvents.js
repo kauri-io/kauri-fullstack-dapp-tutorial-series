@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import BountiesContract from "./contracts/Bounties.json";
 import getWeb3 from "./utils/getWeb3";
-import truffleContract from "truffle-contract";
 
 import Button from 'react-bootstrap/lib/Button';
 import Form from 'react-bootstrap/lib/Form';
@@ -27,7 +26,7 @@ class App extends Component {
       bountyData: undefined,
       bountyDeadline: undefined,
       etherscanLink: "https://rinkeby.etherscan.io",
-      account: null.
+      account: null,
       web3: null
     }
 
@@ -44,9 +43,12 @@ class App extends Component {
       const accounts = await web3.eth.getAccounts();
 
       // Get the contract instance.
-      const bounties = truffleContract(BountiesContract);
-      bounties.setProvider(web3.currentProvider);
-      const instance = await bounties.deployed();
+      const networkId = await web3.eth.net.getId();
+      const deployedNetwork = BountiesContract.networks[networkId];
+      const instance = new web3.eth.Contract(
+       BountiesContract.abi,
+       deployedNetwork && deployedNetwork.address,
+      );
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -84,7 +86,7 @@ class App extends Component {
     if (typeof this.state.bountiesInstance !== 'undefined') {
       event.preventDefault();
       //const ipfsHash = await setJSON({ bountyData: this.state.bountyData });
-      let result = await this.state.bountiesInstance.issueBounty(this.state.bountyData,this.state.bountyDeadline,{from: this.state.account, value: this.state.web3.toWei(this.state.bountyAmount, 'ether')})
+      let result = await this.state.bountiesInstance.methods.issueBounty(this.state.bountyData,this.state.bountyDeadline).send({from: this.state.account, value: this.state.web3.utils.toWei(this.state.bountyAmount, 'ether')})
       this.setLastTransactionDetails(result)
     }
   }
